@@ -1,0 +1,42 @@
+{
+    "manifest_version": 2,
+    "name": "Tab mover",
+    "version": "1.1",
+    "description": "Move your tabs with shortcuts!",
+    "permissions": ["activeTab", "tabs"],
+    "icons": {
+        "16": "images/icon16.png",
+        "32": "images/icon32.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+    },
+    "background": {
+        "scripts": ["watchdog.js"]
+    },
+    "commands": {
+        "left": {
+            "suggested_key": {
+                "default": "Alt+Shift+Left"
+            },
+            "description": "Move tab to left"
+        },
+        "right": {
+            "suggested_key": {
+                "default": "Alt+Shift+Right"
+            },
+            "description": "Move tab to right"
+        },
+        "leftend": {
+            "suggested_key": {
+                "default": "Alt+Shift+PageUp"
+            },
+            "description": "Move tab to left end"
+        },
+        "rightend": {
+            "suggested_key": {
+                "default": "Alt+Shift+PageDown"
+            },
+            "description": "Move tab to right end"
+        }
+    }
+}
