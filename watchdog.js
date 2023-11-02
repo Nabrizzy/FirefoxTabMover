@@ -1,67 +1,97 @@
-browser.commands.onCommand.addListener(watch);
+async function moveLeft() {
+    let tabs = (await getSelectedTabs());
+    let shifted = false;
 
-async function watch(cmd) {
-    let tab = await getCurrentTabInfo();
-
-    if (tab) {
-        let highest = await getHighestIndex();
-        let newIndex = -1;
-    
-        switch (cmd) {
-            case 'left':
-                if (tab.index - 1 >= 0) {
-                    newIndex = tab.index - 1;
-                }
-                else {
-                    newIndex = highest;
-                }
-                break;
-            case 'right':
-                if (tab.index + 1 > highest) {
-                    newIndex = 0;
-                }
-                else {
-                    newIndex = tab.index + 1;
-                }
-                break;
-            case 'leftend':
-                newIndex = 0;
-                break;
-            case 'rightend':
-                newIndex = highest;
-                break;
-        }
-
-        if (newIndex !== -1) {
-            browser.tabs.move(tab.id, {
-                index: newIndex
-            });
+    for (let i = 0, tab = tabs[i]; i < tabs.length; i++, tab = tabs[i]) {
+        if (!shifted) {
+            let index = tab.index;
+            let newIndex = await getPreviousSlot(index);
+            move(tab.id, newIndex);
+            if (newIndex > index) {
+                shifted = true;
+            }
         }
     }
 }
 
-async function getHighestIndex() {
-    let tabs = await browser.tabs.query({ currentWindow: true });
-    let highest = 0;
-    
-    for (let i = 0; i < tabs.length; i++) {
-        if (tabs[i].index > highest) {
-            highest = tabs[i].index;
+async function moveRight() {
+    let tabs = (await getSelectedTabs()).reverse();
+    let shifted = false;
+
+    for (let i = 0, tab = tabs[i]; i < tabs.length; i++, tab = tabs[i]) {
+        if (!shifted) {
+            let index = tab.index;
+            let newIndex = await getNextSlot(index);
+            move(tab.id, newIndex);
+            if (newIndex < index) {
+                shifted = true;
+            }
         }
     }
-
-    return highest;
 }
 
-async function getCurrentTabInfo() {
-    let tab = (await browser.tabs.query({ currentWindow: true, active: true }))[0];
-
-    if (!tab) {
-        return null;
+async function jumpLeft() {
+    let tabs = (await getSelectedTabs());
+    for (let i = 0, tab = tabs[i]; i < tabs.length; i++, tab = tabs[i]) {
+        move(tab.id, i);
     }
-
-    return {
-        id: tab.id,
-        index: tab.index
-    };
 }
+
+async function jumpRight() {
+    let tabs = (await getSelectedTabs()).reverse();
+    let lastIndex = (await getAllTabs()).length - 1;
+    for (let i = 0, tab = tabs[i]; i < tabs.length; i++, tab = tabs[i]) {
+        move(tab.id, lastIndex--);
+    }
+}
+
+async function getPreviousSlot(index) {
+    if (index - 1 < 0) {
+        return (await getAllTabs()).length - 1;
+    }
+    return index -1;
+}
+
+async function getNextSlot(index) {
+    let lastIndex = (await getAllTabs()).length - 1;
+    if (index + 1 > lastIndex) {
+        return 0;
+    }
+    return index + 1;
+}
+
+async function getAllTabs() {
+    return await browser.tabs.query({
+        currentWindow: true
+    });
+}
+
+async function getSelectedTabs() {
+    return await browser.tabs.query({
+        currentWindow: true,
+        highlighted: true
+    });
+}
+
+function move(tabId, index) {
+    browser.tabs.move(tabId, {
+        index: index
+    });
+}
+
+browser.commands.onCommand.addListener(command => {
+    switch (command) {
+        case "moveLeft":
+            moveLeft();
+            break;
+        case "moveRight":
+            moveRight();
+            break;
+        case "jumpLeft":
+            jumpLeft();
+            break;
+        case "jumpRight":
+            jumpRight();
+            break;
+    }
+});
